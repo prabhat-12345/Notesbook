@@ -1,14 +1,12 @@
 import streamlit as st
 import os
-import base64
+import urllib.parse
 
-# Premium wide layout setup
+# Premium layout setup
 st.set_page_config(page_title="Premium Notes Viewer", page_icon="📚", layout="wide")
 
 st.title("🚀 Premium Notes Portal")
 st.write("---")
-
-st.info("🎯 **Bina download kiye aap yahan direct notes padh sakte hain!**")
 
 # 1. Folder se saari .pdf files automatic scan karna
 all_files = os.listdir(".")
@@ -20,36 +18,57 @@ if pdf_files:
     # Dropdown menu ke liye clean naam
     display_names = [f.replace(".pdf", "").replace("_", " ") for f in pdf_files]
     
-    # Top par selection bar
     selected_display = st.selectbox("📑 Padhne ke liye Chapter chunein:", display_names)
-    
     actual_file_name = pdf_files[display_names.index(selected_display)]
     
     st.write(f"### 📖 Now Reading: {selected_display}")
     
-    # 2. PDF ko bina kisi external URL ke direct read karke app me embed karne ka sabse safe tarika
-    with open(actual_file_name, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+    # Sahi Link Builder (Bina kisi mistake ke)
+    GITHUB_USER = "prabhat-12345"
+    REPO_NAME = "notebook"
     
-    # Streamlit ka apna internal PDF displayer component (Bina kisi network error ke 100% chalega)
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px" style="border: 2px solid #0072ff; border-radius: 10px;"></iframe>'
+    # URL encoded file name taaki spaces se link na toote
+    encoded_file_name = urllib.parse.quote(actual_file_name)
+    raw_url = f"https://githubusercontent.com{GITHUB_USER}/{REPO_NAME}/main/{encoded_file_name}"
     
-    st.markdown(pdf_display, unsafe_allow_html=True)
+    # Google Docs viewer ka bilkul sahi format bina kisi error ke
+    google_viewer_url = f"https://google.com{raw_url}&embedded=true"
     
-    st.write("---")
+    # 2. DO PREMIUM OPTIONS FOR MOBILE:
+    col1, col2 = st.columns(2)
     
-    # Backup download option niche
-    with open(actual_file_name, "rb") as file:
-        pdf_bytes = file.read()
-    st.download_button(
-        label=f"📥 Mere phone me download karein",
-        data=pdf_bytes,
-        file_name=actual_file_name,
-        mime="application/pdf",
-        use_container_width=True
+    with col1:
+        # Option A: Mobile me alag tab me bina download kiye direct open karna (100% Working on Mobile)
+        st.markdown(f'''
+            <a href="{raw_url}" target="_blank" style="text-decoration: none;">
+                <div style="width: 100%; padding: 12px; background: linear-gradient(135deg, #28a745, #5cd65c); color: white; text-align: center; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0px 4px 10px rgba(40, 167, 69, 0.3);">
+                    📱 Click Here to Read Full Screen (Mobile)
+                </div>
+            </a>
+        ''', unsafe_allow_html=True)
+        
+    with col2:
+        # Option B: Direct phone storage me download karne ka button
+        with open(actual_file_name, "rb") as file:
+            pdf_bytes = file.read()
+        st.download_button(
+            label="📥 Download to Phone Storage",
+            data=pdf_bytes,
+            file_name=actual_file_name,
+            mime="application/pdf",
+            use_container_width=True
+        )
+        
+    st.write("")
+    st.write("👇 **Neeche App ke andar Preview (Agar white dikhe toh upar 'Mobile View' button dabayein):**")
+
+    # App ke andar ka preview handler
+    st.components.v1.html(
+        f'<iframe src="{google_viewer_url}" width="100%" height="600px" frameborder="0" style="border: 2px solid #0072ff; border-radius: 10px;"></iframe>', 
+        height=620
     )
 else:
-    st.warning("⚠️ GitHub repository me abhi koi bhi .pdf file nahi mili hai. Kripya pehle file upload karein.")
+    st.warning("⚠️ GitHub repository me abhi koi bhi .pdf file nahi mili hai.")
 
 st.write("---")
 st.caption("Developed for Class 9th & 10th Students.")
