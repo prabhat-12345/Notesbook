@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import base64
 
 # Premium wide layout setup
 st.set_page_config(page_title="Premium Notes Viewer", page_icon="📚", layout="wide")
@@ -26,23 +27,18 @@ if pdf_files:
     
     st.write(f"### 📖 Now Reading: {selected_display}")
     
-    # 2. GitHub se file ka bilkul sahi raw internet link banana embed karne ke liye
-    GITHUB_USER = "prabhat-12345"
-    REPO_NAME = "notebook"
-    raw_url = f"https://githubusercontent.com{GITHUB_USER}/{REPO_NAME}/main/{actual_file_name}"
+    # 2. PDF ko bina kisi external URL ke direct read karke app me embed karne ka sabse safe tarika
+    with open(actual_file_name, "rb") as f:
+        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
     
-    # 3. Google Docs PDF Viewer (Jo bina download kiye app me hi PDF open karega)
-    embed_url = f"https://google.com{raw_url}&embedded=true"
+    # Streamlit ka apna internal PDF displayer component (Bina kisi network error ke 100% chalega)
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px" style="border: 2px solid #0072ff; border-radius: 10px;"></iframe>'
     
-    # Premium PDF Box Maker
-    st.components.v1.html(
-        f'<iframe src="{embed_url}" width="100%" height="700px" frameborder="0" style="border: 2px solid #0072ff; border-radius: 10px;"></iframe>', 
-        height=720
-    )
+    st.markdown(pdf_display, unsafe_allow_html=True)
     
     st.write("---")
     
-    # Safe backup download option niche
+    # Backup download option niche
     with open(actual_file_name, "rb") as file:
         pdf_bytes = file.read()
     st.download_button(
